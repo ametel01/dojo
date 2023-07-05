@@ -35,7 +35,7 @@ impl System {
                 .flat_map(|el| {
                     if let ast::Item::FreeFunction(fn_ast) = el {
                         if fn_ast.declaration(db).name(db).text(db).to_string() == "execute" {
-                            return system.from_function(db, fn_ast.clone());
+                            return system.from_function(db, fn_ast.clone(), &name);
                         }
                     }
 
@@ -141,9 +141,9 @@ impl System {
         &mut self,
         db: &dyn SyntaxGroup,
         function_ast: ast::FunctionWithBody,
+        _name: &SmolStr,
     ) -> Vec<RewriteNode> {
         let mut rewrite_nodes = vec![];
-
         let signature = function_ast.declaration(db).signature(db);
 
         let body_nodes: Vec<RewriteNode> = function_ast
@@ -184,7 +184,7 @@ impl System {
         rewrite_nodes.push(RewriteNode::interpolate_patched(
             "
                 #[external(v0)]
-                fn execute(self: @ContractState, $context$$parameters$) $ret_clause$ {
+                fn $_name$(self: @ContractState, $context$$parameters$) $ret_clause$ {
                     $body$
                 }
             ",
